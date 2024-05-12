@@ -21,8 +21,6 @@ def create_panorama(select_images):
     # Đọc các ảnh và thêm vào danh sách
     img_list = [cv2.imread(img) for img in select_images]
 
-    # Kiểm tra xem có ảnh nào không
-    
     start_time1 = time.time()
 
     # Tạo đối tượng Stitcher
@@ -92,7 +90,6 @@ def crop_image(panorama):
         minRectangle = cv2.erode(minRectangle, None)
         sub = cv2.subtract(minRectangle, thresh_img)
 
-
     contours = cv2.findContours(minRectangle.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     contours = imutils.grab_contours(contours)
@@ -119,28 +116,33 @@ def open_image_selection():
         result = create_panorama(images)
         
         if result is not None:
-            cropped_result = None
             if crop_checked.get():  # Kiểm tra trạng thái của checkbox
-                cropped_result = crop_image(result)
-            if cropped_result is not None:
-                save_panorama(cropped_result)
-                result = resize_to_fit_screen(cropped_result)
+                cropped = crop_image(result)
+                save_panorama(cropped)
+                resized = resize_to_fit_screen(cropped)
             else:
                 save_panorama(result)
-                result = resize_to_fit_screen(result)
+                resized = resize_to_fit_screen(result)
+        end = time.time()
+        cal = end - begin
+        print(f"Thời gian thực hiện ảnh vừa rồi: {cal:.4f} giây")
+        print("====================================================================================================")
+        display_panorama(resized)
 
-            end = time.time()
-            cal = end-begin
-            print(f"Thời gian thực hiện ảnh vừa rồi: {cal:.4f} giây")
-            print("====================================================================================================")
-            display_panorama(result)
-        
 def save_panorama(panorama):
-    save_folder = r'C:\Users\nhata\Pictures\pano result'  # Thư mục lưu ảnh
-    current_time = time.strftime("%Y%m%d-%H%M%S")
-    save_path = os.path.join(save_folder, f"panorama_{current_time}.jpg")  # Đường dẫn lưu ảnh
+    folder = save_path_entry.get()
+    current_time = time.strftime("%Y%m%d_%H%M%S")
+    save_path = os.path.join(folder, f"panorama_{current_time}.jpg")  # Đường dẫn lưu ảnh
     cv2.imwrite(save_path, panorama)
     print(f"Đã lưu ảnh panorama vào {save_path}")
+
+def open_save_path():
+    save_folder = 'C:/Users/nhata/Pictures/pano result'
+    save_folder = filedialog.askdirectory()
+    if save_folder:
+        save_path_entry.delete(0, tk.END)  # Xóa nội dung hiện tại trong Entry
+        save_path_entry.insert(0, save_folder)  # Chèn đường dẫn lưu ảnh vào Entry
+    return save_folder
 
 # Main GUI window
 root = tk.Tk()
@@ -164,6 +166,18 @@ select_button.configure(width=15, height=2)  # Cài đặt kích thước của 
 crop_checked = tk.BooleanVar()
 crop_checkbox = tk.Checkbutton(function_frame, text="Crop ảnh", variable=crop_checked)
 crop_checkbox.pack()
+
+# Entry to display save path
+save_path_entry = tk.Entry(function_frame, width=50)
+save_path_entry.insert(0, 'C:/Users/nhata/Pictures/pano result')
+save_path_entry.pack(side=tk.LEFT, padx=10, pady=30)
+
+# Button to select save path
+save_path_button = tk.Button(function_frame, text="...", command=open_save_path)
+save_path_button.pack(side=tk.LEFT, padx=5, pady=30)
+
+credit = tk.Label(root, text="@Nguyễn Nhật Ánh - 93397 - Xử lý ảnh N08")
+credit.pack(side=tk.LEFT)
 
 # Run the main loop
 root.mainloop()
